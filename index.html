@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="How a shipment logbook web app was built in nine weeks: quote comparison, live status, delivery emails and a rules-only assistant. All screens use invented data.">
+<meta property="og:title" content="Sevkiyat Defteri case study">
+<meta property="og:description" content="How a shipment logbook web app was built in nine weeks: quote comparison, live status, delivery emails and a rules-only assistant. All screens use invented data.">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://mkemalkahraman.github.io/sevkiyatdefteri-case-study/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://mkemalkahraman.github.io/sevkiyatdefteri-case-study/img/og.png">
+<title>Sevkiyat Defteri: a shipment logbook (case study)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700&display=swap">
+<style>
+/* Concept: a dispatch board. Cool slate stage, hard 1px rules, one signal-amber accent, phones as the only images. */
+:root {
+  --bg: #edf0f4;
+  --surface: #ffffff;
+  --ink: #141a22;
+  --muted: #566170;
+  --line: #d5dbe3;
+  --accent: #a85a06;
+  --accent-soft: #fbeed9;
+  --phone: #c9d1d9;
+  --shadow: 0 20px 44px -20px rgba(15, 23, 42, 0.42);
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1218; --surface: #161c24; --ink: #e9eef4; --muted: #9aa6b5; --line: #27303b;
+    --accent: #f0b04a; --accent-soft: #2e2412; --phone: #2c343e; --shadow: 0 20px 44px -20px rgba(0, 0, 0, 0.75);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1218; --surface: #161c24; --ink: #e9eef4; --muted: #9aa6b5; --line: #27303b;
+  --accent: #f0b04a; --accent-soft: #2e2412; --phone: #2c343e; --shadow: 0 20px 44px -20px rgba(0, 0, 0, 0.75);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; margin: 0; -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+section { padding-block: 68px; border-top: 1px solid var(--line); }
+section:first-of-type { border-top: 0; padding-top: 48px; }
+.label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.08; margin: 0 0 16px; text-wrap: balance; letter-spacing: -0.02em; }
+h1 { font-size: clamp(46px, 8.4vw, 92px); font-weight: 800; }
+h2 { font-size: clamp(28px, 4.4vw, 42px); font-weight: 800; }
+h3 { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; max-width: 62ch; }
+.lead { font-size: clamp(19px, 2.3vw, 23px); color: var(--muted); max-width: 36ch; }
+.note { font-family: var(--mono); font-size: 13px; color: var(--muted); max-width: 60ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+.chips li { font-family: var(--mono); font-size: 13px; border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 4px; }
+.hero { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(20px, 3vw, 40px); align-items: center; }
+.hero .stage { display: flex; justify-content: flex-end; gap: clamp(10px, 2vw, 22px); }
+.hero .stage .phone { width: 31%; }
+.hero .stage .phone:nth-child(2) { margin-top: 44px; }
+.hero .stage .phone:nth-child(3) { margin-top: 12px; }
+.phone { margin: 0; min-width: 0; }
+.phone img { display: block; width: 100%; height: auto; border-radius: 26px; border: 7px solid var(--phone); box-shadow: var(--shadow); background: var(--surface); }
+.phone figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; text-align: center; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); background: var(--surface); border-radius: 6px; }
+.stats div { padding: 22px 20px; border-left: 1px solid var(--line); min-width: 0; }
+.stats div:first-child { border-left: 0; }
+.stats b { display: block; font-family: var(--display); font-size: clamp(30px, 4vw, 42px); font-weight: 800; line-height: 1.1; }
+.stats span { color: var(--muted); font-size: 15px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 64px); align-items: center; }
+.row.flip .text { order: 2; }
+.row .text, .row .shots { min-width: 0; }
+.row .shots { display: flex; justify-content: center; gap: 18px; }
+.row .shots .phone { width: min(47%, 250px); }
+.row .shots .phone.one { width: min(72%, 290px); }
+ul.points { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+ul.points li { padding-left: 22px; position: relative; max-width: 56ch; }
+ul.points li::before { content: ""; position: absolute; left: 0; top: 0.72em; width: 10px; height: 2px; background: var(--accent); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 22px; min-width: 0; }
+.card .label { margin-bottom: 8px; }
+.card p { font-size: 15.5px; color: var(--muted); margin-bottom: 10px; }
+.card p b { color: var(--ink); font-weight: 700; }
+.card p.lesson { color: var(--ink); margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 700; }
+.timeline { list-style: none; padding: 0; margin: 28px 0 0; border-left: 2px solid var(--line); }
+.timeline li { padding: 0 0 26px 22px; position: relative; max-width: 66ch; }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.timeline b { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); display: block; }
+.timeline span { color: var(--muted); }
+footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var(--muted); font-size: 14px; }
+@media (max-width: 820px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero .stage { justify-content: center; }
+  .row { grid-template-columns: 1fr; }
+  .row.flip .text { order: 0; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stats div:nth-child(3) { border-left: 0; }
+  .stats div:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  section { padding-block: 46px; }
+}
+@media (max-width: 520px) {
+  .hero .stage .phone:not(:first-child) { display: none; }
+  .hero .stage .phone { width: min(78%, 300px); }
+  .row .shots .phone { width: min(46%, 250px); }
+  .row .shots .phone.one { width: min(78%, 300px); }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section>
+    <div class="hero">
+      <div>
+        <p class="label">Case study · Web app</p>
+        <h1>Sevkiyat Defteri</h1>
+        <p class="note">("Shipment Logbook" in Turkish)</p>
+        <p class="lead">A web app that tracks every delivery a small trading company sends out: what went where, with which carrier, for how much, and whether it arrived on time.</p>
+        <ul class="chips"><li>React 19</li><li>TypeScript (strict)</li><li>Vite</li><li>Supabase · Postgres</li><li>Vercel</li></ul>
+      </div>
+      <div class="stage">
+        <figure class="phone"><img src="img/open-jobs.webp" width="780" height="1688" alt="Open jobs screen with trip cards. Each card shows a delivery note number, a route line from warehouse to city, the carrier and a status label"></figure>
+        <figure class="phone"><img src="img/quote-check.webp" width="780" height="1688" alt="Assistant answer card that checks a carrier quote against past prices and shows the usual price range"></figure>
+        <figure class="phone"><img src="img/analysis.webp" width="780" height="1688" alt="Monthly analysis summary with the freight total, trip count, cost per kilogram and on-time rate"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="stats">
+      <div><b>1,112</b><span>automated tests, all passing</span></div>
+      <div><b>42</b><span>database migrations</span></div>
+      <div><b>153</b><span>versions in about 9 weeks</span></div>
+      <div><b>26</b><span>tables, every one with row-level security</span></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Why it was built</p>
+    <h2>The spreadsheet could not answer the question the boss kept asking</h2>
+    <p>The company sends goods by truck every day. Each trip had a delivery note, a carrier, a price and a promised delivery time. This lived in several spreadsheets and in people's heads. When the boss asked "what does it cost to send a pallet to this city?", someone had to search for an answer.</p>
+    <p>Sevkiyat Defteri puts every trip in one place. Staff enter it once on a phone. The app then answers the questions: what is on the road, which carrier is late, what a fair price looks like.</p>
+  </section>
+
+  <section>
+    <div class="row">
+      <div class="text">
+        <p class="label">Open jobs</p>
+        <h2>See everything that is on the road</h2>
+        <p>Each trip that has not been delivered shows as a card with a route line: from the warehouse to the city, and how far along the trip should be. A second view puts a list, a map and the details side by side. The truck position is an estimate from the departure time and the promised days. It is not GPS, and the page says so.</p>
+        <ul class="points">
+          <li>Late trips get a coloured side strip</li>
+          <li>One big button on the card marks a trip as delivered</li>
+          <li>The logbook lists every trip, with totals for kilograms and freight</li>
+        </ul>
+        <p class="note" style="margin-top:18px">The app is in Turkish. "Açık işler" means "open jobs". "Takip" means "tracking". "Defter" means "logbook".</p>
+      </div>
+      <div class="shots">
+        <figure class="phone"><img src="img/open-jobs.webp" width="780" height="1688" loading="lazy" alt="Open jobs list with trip cards, route lines and one late trip"><figcaption>Open jobs</figcaption></figure>
+        <figure class="phone"><img src="img/logbook.webp" width="780" height="1688" loading="lazy" alt="Logbook with totals for open jobs, records, kilograms and freight, and a trip card with a Delivered button"><figcaption>The logbook</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="row flip">
+      <div class="text">
+        <p class="label">Quotes</p>
+        <h2>Compare a quote with what was paid before</h2>
+        <p>Staff collect two or three carrier quotes for each trip and pick one. A price check then looks at past trips on the same route and says whether the chosen price is normal. It uses the price per pallet and the distance. It leaves out extra costs such as waiting fees, because those were only known later and made good trips look expensive.</p>
+        <ul class="points">
+          <li>The check shows the usual range, not one magic number</li>
+          <li>Two delivery notes on the same truck count as one trip</li>
+          <li>A trip where the customer pays the freight has its own switch and stays out of every cost figure</li>
+        </ul>
+        <p class="note" style="margin-top:18px">"Teklif kontrol" means "quote check". "Pazarlık için" means "for bargaining".</p>
+      </div>
+      <div class="shots"><figure class="phone one"><img src="img/quote-check.webp" width="780" height="1688" loading="lazy" alt="Quote check answer: a 26,000 lira offer for 10 pallets to one city is expensive, the expected price is 22,450 lira, shown on a range bar"><figcaption>A quote checked against past trips</figcaption></figure></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <div class="text">
+        <p class="label">Analysis</p>
+        <h2>One screen for the question "are we spending more?"</h2>
+        <p>The analysis page shows the freight total for the month, the change against the last month and the cost per kilogram. A second tab ranks carriers by cost and by how often they arrive on time. A short list at the top points at what needs a look, such as a trip that cost more than twice the usual price for its route.</p>
+        <ul class="points">
+          <li>Every number comes from recorded payments, nothing is predicted</li>
+          <li>Carrier cards show cost per kilogram and on-time rate</li>
+          <li>Trips the customer paid for count as trips and tonnes, never as cost</li>
+        </ul>
+        <p class="note" style="margin-top:18px">"Analiz" means "analysis". "Nakliyeci" means "carrier". "Navlun" means "freight".</p>
+      </div>
+      <div class="shots">
+        <figure class="phone"><img src="img/analysis.webp" width="780" height="1688" loading="lazy" alt="Analysis summary with the freight total, trip count, cost per kilogram and on-time rate"><figcaption>Summary</figcaption></figure>
+        <figure class="phone"><img src="img/carriers.webp" width="780" height="1688" loading="lazy" alt="Carrier cards with freight, cost per kilogram, on-time rate and average delay for each carrier"><figcaption>Carriers</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="row flip">
+      <div class="text">
+        <p class="label">Assistant</p>
+        <h2>Ask in plain Turkish</h2>
+        <p>A small box mascot answers questions such as "how much did we pay carriers last month" or "which invoices are due this week". It does not use a language model. It reads the sentence with plain rules and picks a question type, and the numbers come from the data. If it does not understand a sentence, it logs it, and the rules are extended from that log.</p>
+        <ul class="points">
+          <li>It only reads data. It cannot change anything, and a test checks that</li>
+          <li>Each answer shows the rows behind the number, with links</li>
+          <li>It covers shipments and the import (supplier invoice) side</li>
+        </ul>
+        <p class="note" style="margin-top:18px">"Koli" means "parcel". The mascot is named Koli. "Tedarik vadeleri" means "supplier due dates".</p>
+      </div>
+      <div class="shots">
+        <figure class="phone"><img src="img/assistant.webp" width="780" height="1688" loading="lazy" alt="Assistant answer comparing this month with last month: shipments, kilograms, freight paid and cost per kilogram"><figcaption>Month against month</figcaption></figure>
+        <figure class="phone"><img src="img/supplier-due.webp" width="780" height="1688" loading="lazy" alt="Assistant answer listing two supplier invoices that are due soon, with totals per currency"><figcaption>Supplier due dates</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <div class="text">
+        <p class="label">Emails</p>
+        <h2>Emails that go out without anyone remembering</h2>
+        <p>When a trip is marked delivered, the sales rep gets an email with the products, the amount and the delivery time. Five days before a supplier invoice is due, and on the due day, a reminder goes to a list of people set in the app settings. A weekly backup of the whole database arrives by email too. Gmail sends them through a small bridge script, and a daily quota keeps room for login codes.</p>
+        <ul class="points">
+          <li>Sales prices never appear in the delivery email</li>
+          <li>Each email is sent once, enforced by a unique key in the database</li>
+          <li>An admin switches each email type on; nothing is sent before that</li>
+        </ul>
+        <p class="note" style="margin-top:18px">"Teslim edildi" means "delivered". "Vade" means "due date". "Satıcı" means "seller".</p>
+      </div>
+      <div class="shots"><figure class="phone one"><img src="img/email.webp" width="780" height="1688" loading="lazy" alt="A delivery email on a phone with the customer, two products, the carrier, the freight amount and the delivery time"><figcaption>A delivery email</figcaption></figure></div>
+    </div>
+  </section>
+
+  <section id="lessons">
+    <p class="label">Lessons from real bugs</p>
+    <h2>What actually went wrong</h2>
+    <div class="cards" style="margin-top:28px">
+      <div class="card"><p class="label">Slow network</p><h3>The page that sometimes did not open</h3><p>Some people said the app "sometimes does not open". The server had no errors. The cause was in the browser: network requests had no time limit. On a weak connection a request could hang without failing, and the loading screen stayed forever.</p><p><b>Fix:</b> every request now has a time limit (15 seconds to read, 60 to write), the service worker serves the saved page after 4 seconds, and the app opens from its local copy and recovers by itself. A real-browser test reproduces the hang. The old version never opened in 25 seconds. The new one opened in 4.2 seconds.</p><p class="lesson">A request that never fails is worse than one that fails.</p></div>
+      <div class="card"><p class="label">Database</p><h3>The security fix that slowed every read</h3><p>A security change made a permission check run once for every row. Reading the shipments table went from 102 ms to 432 ms in a local test with 3,000 shipments. The change had not been timed before release.</p><p><b>Fix:</b> the check was wrapped so the database runs it once per query. Reading dropped to 5 ms. Now every SQL change is timed before and after, and a test checks the wrapped form.</p><p class="lesson">Time a change before you call it safe.</p></div>
+      <div class="card"><p class="label">Data model</p><h3>One truck, two delivery notes</h3><p>When one truck carried two delivery notes to the same address, staff split the carrier's price by hand and typed a part into each note. Each part then looked like a cheap trip. The price check and the suggestions slowly drifted low.</p><p><b>Fix:</b> the price is typed once for the truck and split by weight. Price checks count the truck as one trip. If one note is cancelled, the others share the price.</p><p class="lesson">Model the real thing (one truck), not the paperwork (two documents).</p></div>
+      <div class="card"><p class="label">Testing</p><h3>The safety net that quietly stopped working</h3><p>One end-to-end test guards the sync between phone and server. A screen redesign changed the page structure, and the test started failing on its first line. Nobody saw it from version 2.69 to 2.80, because it ran only when someone asked for it.</p><p><b>Fix:</b> the test was rewritten against the new screens and now passes all 33 checks. Any change to the sync code requires it to pass.</p><p class="lesson">A check nobody runs is not a check.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Under the hood</p>
+    <h2>The parts that are not on screen</h2>
+    <div class="cards" style="margin-top:28px">
+      <div class="card"><h3>Security</h3><p>Every table has row-level security, and the rules run in the database, so hiding a button is never the protection. Three roles: admin, writer, viewer. The browser holds only the public key. Secret keys live on the server only, and a test scans the code for them on every build. The anonymous role lost its table privileges (migration 042), as a second layer.</p></div>
+      <div class="card"><h3>Data you can trust</h3><p>Deleting is soft: a record goes to a bin and can be restored. The audit log cannot be edited or deleted. Timestamps come from the server, not the phone. Database constraints reject impossible values.</p></div>
+      <div class="card"><h3>Weak signal</h3><p>The app installs from the browser and opens from a saved copy when the network is slow. Changes made on one phone appear on the others within seconds through a live connection, and a slower refresh runs as a safety net.</p></div>
+      <div class="card"><h3>Tests before release</h3><p>The build stops if a type check or a test fails. Six scripts drive a real browser against a fake server, so no test touches real data. A checklist in the project notes names the checks that must pass before a push.</p></div>
+      <div class="card"><h3>Email</h3><p>A Gmail bridge sends delivery notes, due-date reminders, weekly backups and login codes. The server checks a shared key on every call. A quota guard stops sending before the daily limit, so login codes always have room.</p></div>
+      <div class="card"><h3>Privacy</h3><p>A written data-flow table lists what each outside service receives. No analytics, no ads, no AI service. Fonts are served by the app itself. Address lookups go to open map services and are the one place where delivery addresses leave the system. The notes say so.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Timeline</p>
+    <h2>Nine weeks, in six steps</h2>
+    <ol class="timeline">
+      <li><b>28 Aug 2026</b><span>Version 1.0.0, the first version in the repository.</span></li>
+      <li><b>8 to 9 Sep</b><span>Login becomes mandatory. Roles and row-level security arrive (versions 2.0 to 2.3).</span></li>
+      <li><b>13 to 24 Sep</b><span>Installable on a phone, offline start, daily sales report, live updates between users (2.15 to 2.37).</span></li>
+      <li><b>27 Sep to 4 Oct</b><span>Vector maps, Gmail bridge for delivery emails, login by emailed code (2.42 to 2.48).</span></li>
+      <li><b>By 8 Oct</b><span>Quote suggestions from similar past trips, shared truck (2.56 to 2.60).</span></li>
+      <li><b>27 Oct to 2 Nov</b><span>Rules-only assistant, supplier-invoice reminders, slow-network fix, "customer pays freight" switch (2.72 to 2.81).</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="label">About</p>
+    <h2>Who did what</h2>
+    <p>The product decisions, the business rules and the testing on real phones are Kemal's. The code was written together with Claude. Every screen on this page uses invented names, amounts and places. The app interface is in Turkish. Turkish labels are explained next to each screen.</p>
+    <p class="note">Built with Claude as a pair programmer: Kemal made the product decisions and tested on real phones, Claude wrote the code with him.</p>
+  </section>
+</main>
+<footer>
+  <div class="wrap">Sevkiyat Defteri case study · No source code is published · All data shown is invented</div>
+</footer>
+</body>
+</html>
