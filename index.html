@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="How a shipment logbook web app was built in nine weeks: quote comparison, live status, delivery emails and a rules-only assistant. All screens use invented data.">
+<meta name="description" content="How a shipment logbook web app was built in about ten weeks: quote comparison, live status, delivery emails and a rules-only assistant. All screens use invented data.">
 <meta property="og:title" content="Sevkiyat Defteri case study">
-<meta property="og:description" content="How a shipment logbook web app was built in nine weeks: quote comparison, live status, delivery emails and a rules-only assistant. All screens use invented data.">
+<meta property="og:description" content="How a shipment logbook web app was built in about ten weeks: quote comparison, live status, delivery emails and a rules-only assistant. All screens use invented data.">
 <meta property="og:type" content="article">
 <meta property="og:image" content="https://mkemalkahraman.github.io/sevkiyatdefteri-case-study/img/og.png">
 <meta property="og:image:width" content="1200">
@@ -135,10 +135,10 @@ footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var
 
   <section>
     <div class="stats">
-      <div><b>1,112</b><span>automated tests, all passing</span></div>
-      <div><b>42</b><span>database migrations</span></div>
-      <div><b>153</b><span>versions in about 9 weeks</span></div>
-      <div><b>26</b><span>tables, every one with row-level security</span></div>
+      <div><b>1,136</b><span>automated tests, all passing</span></div>
+      <div><b>43</b><span>database migrations</span></div>
+      <div><b>165</b><span>versions in about 10 weeks</span></div>
+      <div><b>25</b><span>tables, every one with row-level security</span></div>
     </div>
   </section>
 
@@ -251,6 +251,7 @@ footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var
       <div class="card"><p class="label">Database</p><h3>The security fix that slowed every read</h3><p>A security change made a permission check run once for every row. Reading the shipments table went from 102 ms to 432 ms in a local test with 3,000 shipments. The change had not been timed before release.</p><p><b>Fix:</b> the check was wrapped so the database runs it once per query. Reading dropped to 5 ms. Now every SQL change is timed before and after, and a test checks the wrapped form.</p><p class="lesson">Time a change before you call it safe.</p></div>
       <div class="card"><p class="label">Data model</p><h3>One truck, two delivery notes</h3><p>When one truck carried two delivery notes to the same address, staff split the carrier's price by hand and typed a part into each note. Each part then looked like a cheap trip. The price check and the suggestions slowly drifted low.</p><p><b>Fix:</b> the price is typed once for the truck and split by weight. Price checks count the truck as one trip. If one note is cancelled, the others share the price.</p><p class="lesson">Model the real thing (one truck), not the paperwork (two documents).</p></div>
       <div class="card"><p class="label">Testing</p><h3>The safety net that quietly stopped working</h3><p>One end-to-end test guards the sync between phone and server. A screen redesign changed the page structure, and the test started failing on its first line. Nobody saw it from version 2.69 to 2.80, because it ran only when someone asked for it.</p><p><b>Fix:</b> the test was rewritten against the new screens and now passes all 33 checks. Any change to the sync code requires it to pass.</p><p class="lesson">A check nobody runs is not a check.</p></div>
+      <div class="card"><p class="label">Business rule</p><h3>One box, two meanings</h3><p>Each quote has a promised delivery time in days. An empty box was saved as 0, and 0 also meant "delivered on the day it leaves", so the two could not be told apart. Three screens also measured lateness in three ways: for a one-day promise, one screen marked a trip late after 24 hours and the other two after 36.</p><p><b>Fix:</b> the rule now lives in one module and counts calendar days. 0 is the day the truck leaves, 1 is the next day, an empty box means no promise. A trip is late only after the promised day has ended. A one-time migration turned the old zeros back into empty boxes.</p><p class="lesson">One rule, written in one place.</p></div>
     </div>
   </section>
 
@@ -261,7 +262,7 @@ footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var
       <div class="card"><h3>Security</h3><p>Every table has row-level security, and the rules run in the database, so hiding a button is never the protection. Three roles: admin, writer, viewer. The browser holds only the public key. Secret keys live on the server only, and a test scans the code for them on every build. The anonymous role lost its table privileges (migration 042), as a second layer.</p></div>
       <div class="card"><h3>Data you can trust</h3><p>Deleting is soft: a record goes to a bin and can be restored. The audit log cannot be edited or deleted. Timestamps come from the server, not the phone. Database constraints reject impossible values.</p></div>
       <div class="card"><h3>Weak signal</h3><p>The app installs from the browser and opens from a saved copy when the network is slow. Changes made on one phone appear on the others within seconds through a live connection, and a slower refresh runs as a safety net.</p></div>
-      <div class="card"><h3>Tests before release</h3><p>The build stops if a type check or a test fails. Six scripts drive a real browser against a fake server, so no test touches real data. A checklist in the project notes names the checks that must pass before a push.</p></div>
+      <div class="card"><h3>Tests before release</h3><p>The build stops if a type check or a test fails. Seven scripts drive a real browser against a fake server, so no test touches real data. Every pull request is also scanned for leaked secrets (Gitleaks) and for unsafe workflow settings (zizmor), and Dependabot proposes dependency updates once a month. A checklist in the project notes names the checks that must pass before a push.</p></div>
       <div class="card"><h3>Email</h3><p>A Gmail bridge sends delivery notes, due-date reminders, weekly backups and login codes. The server checks a shared key on every call. A quota guard stops sending before the daily limit, so login codes always have room.</p></div>
       <div class="card"><h3>Privacy</h3><p>A written data-flow table lists what each outside service receives. No analytics, no ads, no AI service. Fonts are served by the app itself. Address lookups go to open map services and are the one place where delivery addresses leave the system. The notes say so.</p></div>
     </div>
@@ -269,7 +270,7 @@ footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var
 
   <section>
     <p class="label">Timeline</p>
-    <h2>Nine weeks, in six steps</h2>
+    <h2>About ten weeks, in seven steps</h2>
     <ol class="timeline">
       <li><b>28 Aug 2026</b><span>Version 1.0.0, the first version in the repository.</span></li>
       <li><b>8 to 9 Sep</b><span>Login becomes mandatory. Roles and row-level security arrive (versions 2.0 to 2.3).</span></li>
@@ -277,6 +278,7 @@ footer { border-top: 1px solid var(--line); padding-block: 28px 44px; color: var
       <li><b>27 Sep to 4 Oct</b><span>Vector maps, Gmail bridge for delivery emails, login by emailed code (2.42 to 2.48).</span></li>
       <li><b>By 8 Oct</b><span>Quote suggestions from similar past trips, shared truck (2.56 to 2.60).</span></li>
       <li><b>27 Oct to 2 Nov</b><span>Rules-only assistant, supplier-invoice reminders, slow-network fix, "customer pays freight" switch (2.72 to 2.81).</span></li>
+      <li><b>3 Nov</b><span>Delivery promise counted in calendar days, code reorganised into feature folders (the sync core included, with no change in behaviour), secret and workflow scanning on every pull request (2.82).</span></li>
     </ol>
   </section>
 
