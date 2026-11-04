@@ -10,9 +10,9 @@ A web app that a small trading company uses to track every delivery: what is on 
 
 - Web app that installs from the browser and runs on a phone home screen
 - React 19, TypeScript (strict), Vite, Supabase (Postgres, Auth, Realtime, Storage), Vercel
-- 1,136 automated tests, and the build stops when one fails
-- 25 database tables, every one with row-level security; secret keys exist only on the server
-- 43 database migrations and 165 logged versions in about ten weeks
+- 1,153 automated tests, and the build stops when one fails
+- 26 database tables, every one with row-level security; secret keys exist only on the server
+- 44 database migrations and 167 logged versions in about ten weeks
 - A rules-only assistant (no language model) answers questions from the recorded data
 
 ## What it does
@@ -22,6 +22,7 @@ A web app that a small trading company uses to track every delivery: what is on 
 - **Analysis:** freight total, change against last month, cost per kilogram, carrier ranking
 - **Assistant:** ask in plain Turkish; answers come from the recorded data and never change it
 - **Emails:** delivery notes, supplier due-date reminders and weekly backups, sent once each
+- **Order email:** prepared as an Outlook draft when a trip is saved; the person sends it, the app never does
 
 ## Lessons from real bugs
 
@@ -29,6 +30,7 @@ A web app that a small trading company uses to track every delivery: what is on 
 - **The security fix that slowed every read:** a permission check ran once per row. Wrapping it brought reads from 432 ms back to 5 ms. Now every SQL change is timed.
 - **One truck, two delivery notes:** a price split by hand made each part look like a cheap trip. The price is now typed once and split by weight.
 - **The safety net that quietly stopped working:** an end-to-end test failed on its first line for several versions and nobody noticed. A check nobody runs is not a check.
+- **The email that looked right in the browser:** Outlook draws email with the Word engine, so a design checked in a browser stretched and lost its logo. It was fixed against screenshots of the real window.
 - **One box, two meanings:** an empty delivery promise was saved as 0, which also meant "same day", and three screens measured lateness three ways. The rule now lives in one place and counts calendar days.
 
 The full write-up is on the [case study page](https://mkemalkahraman.github.io/sevkiyatdefteri-case-study/#lessons).
